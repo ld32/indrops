@@ -37,13 +37,16 @@ def low_complexity_filter(args):
             new_seq = seq[:trim_at_position]
             new_qual = qual[:trim_at_position]
 
+            # bug fix for read: 
+            # name: GTACGGAC-TCCAGGGA:TCCTAT:A00794_411_HWC3YDRXX_1_1101_5159_1000 
+            # seq:GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 
+            # qual:FFFFFFFFFFFFF,F:FF:FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+            low_complexity_bases = sum([m.end()-m.start() for m in re.finditer(single_base_runs_regex, new_seq)])
+            low_complexity_fraction = float(low_complexity_bases)/len(new_seq)
 
-        low_complexity_bases = sum([m.end()-m.start() for m in re.finditer(single_base_runs_regex, new_seq)])
-        low_complexity_fraction = float(low_complexity_bases)/len(new_seq)
-
-        if low_complexity_fraction > args.max_low_complexity_fraction:
-            keep_read = False
-            rejected_because_complexity_too_low += 1
+            if low_complexity_fraction > args.max_low_complexity_fraction:
+               keep_read = False
+               rejected_because_complexity_too_low += 1
 
         if keep_read:
             output_lines = to_fastq(name, new_seq, new_qual)
